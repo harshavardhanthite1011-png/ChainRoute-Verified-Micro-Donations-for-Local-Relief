@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 import ABI from "../contracts/ChainRouteLedgerABI.json";
 import { MST_TESTNET, MST_MAINNET } from "./constants";
+import { walletManager, getMSTChainConfig } from "./wallet";
 
 export function getMstProvider(isMainnet = false) {
   const config = isMainnet ? MST_MAINNET : MST_TESTNET;
@@ -18,65 +19,23 @@ export function getLedgerContract(
   return new ethers.Contract(contractAddress, ABI, provider);
 }
 
-export async function requestBridgeKeyWallet() {
-  if (typeof window === "undefined" || !(window as any).ethereum) {
-    throw new Error(
-      "No Web3 wallet found. Please install the BridgeKey Extension (https://bridgekey.io) or MetaMask."
-    );
-  }
-
-  const ethereum = (window as any).ethereum;
-  const accounts: string[] = await ethereum.request({
-    method: "eth_requestAccounts",
-  });
-
-  const chainIdHex: string = await ethereum.request({
-    method: "eth_chainId",
-  });
-
-  return {
-    account: accounts[0],
-    chainIdHex,
-    ethereum,
-  };
+/**
+ * Connects directly through the BridgeKey wallet extension via EIP-6963.
+ * Eliminates generic window.ethereum routing to prevent MetaMask interception.
+ */
+export async function requestBridgeKeyWallet(isMainnet = false) {
+  return walletManager.connectBridgeKey(isMainnet);
 }
 
+/**
+ * Switches to or adds the MST network on the selected BridgeKey provider.
+ */
 export async function switchOrAddMSTNetwork(isMainnet = false) {
-  if (typeof window === "undefined" || !(window as any).ethereum) {
-    throw new Error("No Web3 wallet injected.");
+  const provider = await walletManager.getBridgeKeyProvider();
+  if (!provider) {
+    throw new Error("BridgeKey wallet extension is not active.");
   }
-
-  const ethereum = (window as any).ethereum;
-  const target = isMainnet ? MST_MAINNET : MST_TESTNET;
-
-  try {
-    await ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: target.chainIdHex }],
-    });
-  } catch (switchError: any) {
-    // 4902 code indicates chain is not yet added to wallet
-    if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
-      await ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: target.chainIdHex,
-            chainName: target.name,
-            rpcUrls: [target.rpcUrl],
-            nativeCurrency: {
-              name: target.currencySymbol,
-              symbol: target.currencySymbol,
-              decimals: target.decimals,
-            },
-            blockExplorerUrls: [target.blockExplorerUrl],
-          },
-        ],
-      });
-    } else {
-      throw switchError;
-    }
-  }
+  return walletManager.switchOrAddNetwork(provider, isMainnet);
 }
 
 export async function readCampaignTotalsFromChain(

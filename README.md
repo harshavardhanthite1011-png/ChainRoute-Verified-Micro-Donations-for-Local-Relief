@@ -68,7 +68,12 @@ For complete technical notes and architectural defense points for judges, see [d
 | **Public Faucet** | [https://faucet.mstblockchain.com](https://faucet.mstblockchain.com) | N/A (Mainnet funds provided) |
 | **Official Wallet**| [BridgeKey Extension](https://bridgekey.io) | [BridgeKey Extension](https://bridgekey.io) |
 
-Official technical notes and verification logs are in [docs/MST_NOTES.md](docs/MST_NOTES.md).
+Official technical notes and verification logs are in [docs/MST_NOTES.md](docs/MST_NOTES.md) and [docs/BRIDGEKEY_NOTES.md](docs/BRIDGEKEY_NOTES.md).
+
+### Wallet Integration (BridgeKey)
+- **EIP-6963 Direct Provider Discovery**: ChainRoute discovers the official BridgeKey extension via modern EIP-6963 standard (`io.bridgekey.wallet`), completely bypassing `window.ethereum` to eliminate multi-wallet conflicts with MetaMask.
+- **Dedicated Provider Binding**: All account requests, network auto-switching (to MST Testnet `0x5752035` or Mainnet `0x1226`), and contract signing invoke the isolated BridgeKey provider object.
+- **Graceful Detection**: If BridgeKey is not present, the user is presented with a direct install prompt linking to the official Chrome Web Store extension, with zero fallback to MetaMask.
 
 ---
 

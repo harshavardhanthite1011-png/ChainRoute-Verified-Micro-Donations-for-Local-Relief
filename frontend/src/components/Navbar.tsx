@@ -16,7 +16,7 @@ import {
   MST_MAINNET,
   BRIDGEKEY_CONFIG,
 } from "../lib/constants";
-import { requestBridgeKeyWallet, switchOrAddMSTNetwork } from "../lib/mst";
+import { walletManager, getMSTChainConfig } from "../lib/wallet";
 
 interface NavbarProps {
   onNavigate?: (section: string) => void;
@@ -35,57 +35,47 @@ export function Navbar({
   const [isConnecting, setIsConnecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentChainId, setCurrentChainId] = useState<string>("");
+  const [installPrompt, setInstallPrompt] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if wallet is already connected
-    if (typeof window !== "undefined" && (window as any).ethereum) {
-      const eth = (window as any).ethereum;
-      eth
-        .request({ method: "eth_accounts" })
-        .then((accounts: string[]) => {
-          if (accounts && accounts.length > 0) {
-            setWalletAddress(accounts[0]);
-          }
-        })
-        .catch(() => {});
+    // Setup provider change callbacks
+    walletManager.setCallbacks(
+      (accounts) => {
+        setWalletAddress(accounts && accounts.length > 0 ? accounts[0] : "");
+      },
+      (chainId) => {
+        setCurrentChainId(chainId);
+      }
+    );
 
-      eth
-        .request({ method: "eth_chainId" })
-        .then((chain: string) => {
-          setCurrentChainId(chain);
-        })
-        .catch(() => {});
-
-      const handleChainChanged = (chain: string) => {
-        setCurrentChainId(chain);
-      };
-      const handleAccountsChanged = (accs: string[]) => {
-        setWalletAddress(accs.length > 0 ? accs[0] : "");
-      };
-
-      eth.on?.("chainChanged", handleChainChanged);
-      eth.on?.("accountsChanged", handleAccountsChanged);
-
-      return () => {
-        eth.removeListener?.("chainChanged", handleChainChanged);
-        eth.removeListener?.("accountsChanged", handleAccountsChanged);
-      };
-    }
-  }, []);
+    // Silent auto-reconnect if BridgeKey was previously connected
+    walletManager
+      .autoReconnect(isMainnet)
+      .then((res) => {
+        if (res) {
+          setWalletAddress(res.account);
+          setCurrentChainId(res.chainIdHex);
+        }
+      })
+      .catch(() => {});
+  }, [isMainnet]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
+    setInstallPrompt(false);
     try {
-      const { account, chainIdHex } = await requestBridgeKeyWallet();
-      setWalletAddress(account);
-      setCurrentChainId(chainIdHex);
-
-      const targetChainHex = isMainnet ? MST_MAINNET.chainIdHex : MST_TESTNET.chainIdHex;
-      if (chainIdHex.toLowerCase() !== targetChainHex.toLowerCase()) {
-        await switchOrAddMSTNetwork(isMainnet);
-      }
+      const res = await walletManager.connectBridgeKey(isMainnet);
+      setWalletAddress(res.account);
+      setCurrentChainId(res.chainIdHex);
     } catch (err: any) {
-      alert(err.message || "Failed to connect wallet.");
+      if (err.message === "BRIDGEKEY_NOT_INSTALLED") {
+        setInstallPrompt(true);
+      } else if (err.code === 4001) {
+        // User rejected the connection request in popup
+        console.log("User rejected connection request.");
+      } else {
+        alert(err.message || "Failed to connect to BridgeKey.");
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -99,7 +89,7 @@ export function Navbar({
     }
   };
 
-  const activeNetwork = isMainnet ? MST_MAINNET : MST_TESTNET;
+  const activeNetwork = getMSTChainConfig(isMainnet);
   const isRightChain =
     currentChainId.toLowerCase() === activeNetwork.chainIdHex.toLowerCase();
 
@@ -189,7 +179,7 @@ export function Navbar({
               </span>
               <button
                 onClick={handleCopy}
-                className="p-1 hover:text-white transition-colors"
+                className="p-1 hover:text-white transition-colors cursor-pointer"
                 title="Copy Address"
               >
                 {copied ? (
@@ -199,6 +189,16 @@ export function Navbar({
                 )}
               </button>
             </div>
+          ) : installPrompt ? (
+            <a
+              href={BRIDGEKEY_CONFIG.chromeExtension}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-400 text-slate-950 hover:brightness-110 active:scale-95 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Install BridgeKey</span>
+            </a>
           ) : (
             <button
               onClick={handleConnect}
@@ -210,7 +210,7 @@ export function Navbar({
               ) : (
                 <Wallet className="w-4 h-4" />
               )}
-              <span>Connect BridgeKey</span>
+              <span>Connect with BridgeKey</span>
             </button>
           )}
         </div>

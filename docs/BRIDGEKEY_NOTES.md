@@ -1,60 +1,56 @@
-# BridgeKey Wallet Integration & Empirical Diagnostics
+# BridgeKey Wallet Integration & Resolution Notes
 
 *Team "Blockers" | MST Blockchain Buildathon 2.0*  
 *Project: ChainRoute*
 
 ---
 
-## 1. Official Extension & App Identifiers
+## 1. Confirmed Extension Identifiers (Empirical Verification)
 
-- **Official Website**: [https://bridgekey.io](https://bridgekey.io)
-- **Chrome Web Store Extension**:
-  - URL: `https://chromewebstore.google.com/detail/bridgekey/bfjojdcfenehemjgjlepdjomkpginlkg`
-  - Extension ID: `bfjojdcfenehemjgjlepdjomkpginlkg`
-- **Android App**:
-  - Package ID: `com.bridgekey`
-  - Play Store: `https://play.google.com/store/apps/details?id=com.bridgekey`
+From browser scans with both MetaMask and BridgeKey extensions active:
+- **EIP-6963 RDNS**: `io.bridgekey.wallet`
+- **Provider Name**: `BridgeKey`
+- **Flag**: `isBridgeKey: true`
+- **Chrome Web Store Extension ID**: `bfjojdcfenehemjgjlepdjomkpginlkg`
+- **Extension URL**: [https://chromewebstore.google.com/detail/bridgekey/bfjojdcfenehemjgjlepdjomkpginlkg](https://chromewebstore.google.com/detail/bridgekey/bfjojdcfenehemjgjlepdjomkpginlkg)
 
 ---
 
-## 2. MST Blockchain Network Parameters (Confirmed Hex)
+## 2. Root Cause & Architectural Fix
+
+### The Conflict
+When multiple EVM wallet extensions (such as MetaMask and BridgeKey) are enabled in Chrome:
+- MetaMask overrides the global `window.ethereum` object (`window.ethereum.isMetaMask === true`).
+- `window.ethereum.providers` array was not present.
+- Any naive invocation of `window.ethereum.request(...)` or default injected connectors directly activates MetaMask, completely hijacking the connection.
+
+### The Resolution (`frontend/src/lib/wallet.ts`)
+1. **EIP-6963 Provider Announcement**:
+   - The app listens for `eip6963:announceProvider` and dispatches `eip6963:requestProvider`.
+   - Providers are collected and filtered specifically for `detail.info.rdns === "io.bridgekey.wallet"` (with fallback to `detail.provider.isBridgeKey === true`).
+2. **Direct Provider Binding**:
+   - The connection request (`eth_requestAccounts`), chain query (`eth_chainId`), network switch (`wallet_switchEthereumChain`), and network add (`wallet_addEthereumChain`) are called **strictly on the isolated BridgeKey provider instance**.
+   - Generic `window.ethereum` is completely bypassed across the entire codebase.
+3. **No Silent MetaMask Fallback**:
+   - If BridgeKey is not installed, the UI directly renders an **"Install BridgeKey"** button pointing to the Chrome Web Store, preventing any accidental routing to MetaMask.
+4. **Persistence & Event Handling**:
+   - When connected, `localStorage` records `chainroute_connected_rdns = "io.bridgekey.wallet"`.
+   - Upon page refresh, `walletManager.autoReconnect()` silently restores the session via `provider.request({ method: "eth_accounts" })`.
+   - `accountsChanged` and `chainChanged` listeners are bound directly to the BridgeKey provider.
+
+---
+
+## 3. Network Parameters & Dynamic Hex Calculation
 
 - **MST Testnet**:
   - Decimal Chain ID: `91562037`
-  - **Hex Chain ID**: `0x5752035` *(Verified via node `(91562037).toString(16)` and JSON-RPC `eth_chainId` on `https://testnetrpc.mstblockchain.com`)*
+  - Computed Hex: `"0x" + (91562037).toString(16)` = **`0x5752035`**
   - RPC URL: `https://testnetrpc.mstblockchain.com`
   - Symbol: `tMSTC`
-  - Decimals: `18`
   - Explorer: `https://testnet.mstscan.com`
 - **MST Mainnet**:
   - Decimal Chain ID: `4646`
-  - **Hex Chain ID**: `0x1226` *(Verified via node `(4646).toString(16)` and JSON-RPC `eth_chainId` on `https://mariorpc.mstblockchain.com/`)*
+  - Computed Hex: `"0x" + (4646).toString(16)` = **`0x1226`**
   - RPC URL: `https://mariorpc.mstblockchain.com/`
   - Symbol: `MSTC`
-  - Decimals: `18`
   - Explorer: `https://mstscan.com`
-
----
-
-## 3. The Root Cause of the Bug & EIP-6963 Multi-Injected Conflict
-
-When both MetaMask and BridgeKey extensions are installed:
-1. Both extensions inject into `window.ethereum`.
-2. MetaMask typically overwrites or intercepts `window.ethereum`, setting `window.ethereum.isMetaMask = true`.
-3. Calling `window.ethereum.request({ method: 'eth_requestAccounts' })` routes directly to MetaMask, hijacking the user connection.
-4. **The Fix**:
-   - Modern EVM standard **EIP-6963** announces distinct provider details (`info.name`, `info.rdns`, `info.uuid`, `info.icon`, `provider`).
-   - If multiple providers exist under `window.ethereum.providers[]`, we filter and isolate the BridgeKey provider object.
-   - All subsequent reads, network additions, network switches, and transaction signings must use **that exact provider instance**, completely bypassing generic `window.ethereum`.
-
----
-
-## 4. Diagnostics Tool (`/debug/wallets`)
-
-To empirically capture the exact RDNS, flags, and provider shape from the user's browser:
-- Diagnostic URL: `http://localhost:3000/debug/wallets`
-- Scans:
-  1. `eip6963:announceProvider` events.
-  2. `window.ethereum` flags & `window.ethereum.providers` array.
-  3. Global namespaces (`window.bridgekey`, `window.bridgeKey`, etc.).
-  4. Provides 1-click "Copy Diagnostic JSON" button.
