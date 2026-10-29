@@ -8,6 +8,7 @@ export const MST_TESTNET = {
   decimals: 18,
   blockExplorerUrl: "https://testnet.mstscan.com",
   faucetUrl: "https://faucet.mstblockchain.com",
+  faucetAltUrl: "https://faucet.masterstroke.academy",
 };
 
 export const MST_MAINNET = {
@@ -29,7 +30,7 @@ export const BRIDGEKEY_CONFIG = {
 
 // Contract address fallback
 export const CONTRACT_ADDRESS_TESTNET =
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || "";
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || "0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45";
 export const CONTRACT_ADDRESS_MAINNET =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET || "";
 

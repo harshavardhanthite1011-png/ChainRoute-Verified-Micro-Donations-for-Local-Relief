@@ -1,0 +1,818 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "authorized",
+          "type": "bool"
+        }
+      ],
+      "name": "AuthorizedWriterSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "organizer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "budgetHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "goal",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "itemsCount",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "CampaignCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "donationIndex",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "receiptHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "DonationRecorded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "expenseIndex",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint32",
+          "name": "lineItemId",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "expenseHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "ExpenseRecorded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "authorizedWriters",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "campaignCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "campaigns",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "budgetHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "goal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "itemsCount",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "organizer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalRaised",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSpent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "donationCount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expenseCount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "exists",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "budgetHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "goal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "itemsCount",
+          "type": "uint32"
+        }
+      ],
+      "name": "createCampaign",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getCampaign",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "budgetHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "goal",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint32",
+              "name": "itemsCount",
+              "type": "uint32"
+            },
+            {
+              "internalType": "address",
+              "name": "organizer",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalRaised",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalSpent",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "donationCount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "expenseCount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "exists",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct ChainRouteLedger.Campaign",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getCampaignTotals",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "totalRaised",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSpent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "remaining",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "goal",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getDonation",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "receiptHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recordedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct ChainRouteLedger.DonationEntry",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "offset",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "getDonations",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "receiptHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recordedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct ChainRouteLedger.DonationEntry[]",
+          "name": "entries",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getExpense",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "lineItemId",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "expenseHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recordedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct ChainRouteLedger.ExpenseEntry",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "offset",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "getExpenses",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint32",
+              "name": "lineItemId",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "expenseHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recordedBy",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct ChainRouteLedger.ExpenseEntry[]",
+          "name": "entries",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "receiptHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "recordDonation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "donationIndex",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "lineItemId",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "expenseHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "recordExpense",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "expenseIndex",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "authorized",
+          "type": "bool"
+        }
+      ],
+      "name": "setAuthorizedWriter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "usedExpenseHashes",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "usedReceiptHashes",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "testHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "verifyExpenseHash",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "testHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "verifyReceiptHash",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50600080546001600160a01b03191633908117825580825260026020526040808320805460ff19166001179055519091907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a36040516001815233907f3c2d47f7dfe317250be317737f22e1e316a42c40a46e5095cd55469432900fe49060200160405180910390a2611c0d806100ab6000396000f3fe608060405234801561001057600080fd5b50600436106101215760003560e01c80637274e30d116100ad578063d0197beb11610071578063d0197beb146103ac578063dad651fb146103bf578063f2fde38b146103df578063fd548a9e146103f2578063fe94a3e01461040557600080fd5b80637274e30d1461032557806376ff7bf41461032e5780638da5cb5b1461034e5780638ed56d8b14610379578063a7c9ce501461039957600080fd5b806336d1d975116100f457806336d1d975146102775780634dceb0be146102aa578063526241a8146102cd578063542a086c146102f05780635598f8cc1461030557600080fd5b8063141961bc1461012657806317c635071461020357806329f3e5d9146102245780632e18fd9114610257575b600080fd5b61019c61013436600461174a565b6003602081905260009182526040909120805460018201546002830154938301546004840154600585015460068601546007870154600888015460099098015496989597959663ffffffff8616966401000000009096046001600160a01b0316959060ff168b565b604080519b8c5260208c019a909a52988a019790975263ffffffff90951660608901526001600160a01b03909316608088015260a087019190915260c086015260e08501526101008401526101208301521515610140820152610160015b60405180910390f35b61021661021136600461177c565b610418565b6040519081526020016101fa565b61024761023236600461174a565b60076020526000908152604090205460ff1681565b60405190151581526020016101fa565b61026a6102653660046117b1565b610685565b6040516101fa91906117dd565b61028a61028536600461174a565b61086c565b6040805194855260208501939093529183015260608201526080016101fa565b6102476102b836600461174a565b60066020526000908152604090205460ff1681565b6102476102db366004611869565b60026020526000908152604090205460ff1681565b6103036102fe366004611884565b6108dc565b005b61031861031336600461174a565b6109d1565b6040516101fa91906118c0565b61021660015481565b61034161033c366004611966565b610b19565b6040516101fa9190611988565b600054610361906001600160a01b031681565b6040516001600160a01b0390911681526020016101fa565b61038c610387366004611966565b610c2d565b6040516101fa91906119f8565b6102476103a73660046117b1565b610d52565b6102166103ba366004611a06565b610da7565b6103d26103cd3660046117b1565b61114b565b6040516101fa9190611a41565b6103036103ed366004611869565b611343565b6102476104003660046117b1565b61143e565b6102166104133660046117b1565b611496565b600080546001600160a01b031633148061044157503360009081526002602052604090205460ff165b6104665760405162461bcd60e51b815260040161045d90611a83565b60405180910390fd5b836104c25760405162461bcd60e51b815260206004820152602660248201527f436861696e526f7574653a20627564676574486173682063616e6e6f7420626560448201526520656d70747960d01b606482015260840161045d565b600083116105255760405162461bcd60e51b815260206004820152602a60248201527f436861696e526f7574653a20676f616c206d7573742062652067726561746572604482015269207468616e207a65726f60b01b606482015260840161045d565b60008263ffffffff16116105945760405162461bcd60e51b815260206004820152603060248201527f436861696e526f7574653a206974656d73436f756e74206d757374206265206760448201526f726561746572207468616e207a65726f60801b606482015260840161045d565b600180549060006105a483611ae6565b90915550506001805460008181526003602081815260408084208581558087018b9055600281018a9055928301805463ffffffff8a166001600160c01b03199091168117336401000000008102919091179092554260048601819055600586018790556006860187905560078601879055600886019690965560098501805460ff191690981790975581518b81529283018a905290820195909552606081019290925291935090919083907f521aaeb2c7bb0d48e8d64cec1a4654f76d2787697c25b771d7d2765462bad2c4906080015b60405180910390a3509392505050565b600083815260036020526040902060098101546060919060ff166106bb5760405162461bcd60e51b815260040161045d90611aff565b8060070154841015806106cc575082155b1561072457604080516000808252602082019092529061071b565b6040805160808101825260008082526020808301829052928201819052606082015282526000199092019101816106e75790505b50915050610865565b60006107308486611b58565b90508160070154811115610745575060078101545b60006107518683611b6b565b90508067ffffffffffffffff81111561076c5761076c611b42565b6040519080825280602002602001820160405280156107be57816020015b60408051608081018252600080825260208083018290529282018190526060820152825260001990920191018161078a5790505b50935060005b81811015610860576000888152600460205260408120906107e5838a611b58565b81526020808201929092526040908101600020815160808101835281548152600182015493810193909352600281015491830191909152600301546001600160a01b03166060820152855186908390811061084257610842611b7e565b6020026020010181905250808061085890611ae6565b9150506107c4565b505050505b9392505050565b600081815260036020526040812060098101548291829182919060ff166108a55760405162461bcd60e51b815260040161045d90611aff565b80600501549450806006015493508385116108c15760006108cb565b6108cb8486611b6b565b925080600201549150509193509193565b6000546001600160a01b031633146109065760405162461bcd60e51b815260040161045d90611b94565b6001600160a01b0382166109725760405162461bcd60e51b815260206004820152602d60248201527f436861696e526f7574653a207a65726f20616464726573732063616e6e6f742060448201526c189948185d5d1a1bdc9a5e9959609a1b606482015260840161045d565b6001600160a01b038216600081815260026020908152604091829020805460ff191685151590811790915591519182527f3c2d47f7dfe317250be317737f22e1e316a42c40a46e5095cd55469432900fe4910160405180910390a25050565b610a42604051806101600160405280600081526020016000801916815260200160008152602001600063ffffffff16815260200160006001600160a01b0316815260200160008152602001600081526020016000815260200160008152602001600081526020016000151581525090565b60008281526003602052604090206009015460ff16610a735760405162461bcd60e51b815260040161045d90611aff565b50600090815260036020818152604092839020835161016081018552815481526001820154928101929092526002810154938201939093529082015463ffffffff8116606083015264010000000090046001600160a01b03166080820152600482015460a0820152600582015460c0820152600682015460e08201526007820154610100820152600882015461012082015260099091015460ff16151561014082015290565b6040805160808101825260008082526020820181905291810182905260608101919091526000838152600360205260409020600981015460ff16610b6f5760405162461bcd60e51b815260040161045d90611aff565b80600701548310610bd25760405162461bcd60e51b815260206004820152602760248201527f436861696e526f7574653a20646f6e6174696f6e20696e646578206f7574206f604482015266662072616e676560c81b606482015260840161045d565b505060008281526004602090815260408083208484528252918290208251608081018452815481526001820154928101929092526002810154928201929092526003909101546001600160a01b031660608201525b92915050565b6040805160a0810182526000808252602082018190529181018290526060810182905260808101919091526000838152600360205260409020600981015460ff16610c8a5760405162461bcd60e51b815260040161045d90611aff565b80600801548310610cec5760405162461bcd60e51b815260206004820152602660248201527f436861696e526f7574653a20657870656e736520696e646578206f7574206f666044820152652072616e676560d01b606482015260840161045d565b5050600091825260056020908152604080842092845291815291819020815160a081018352815463ffffffff16815260018201549381019390935260028101549183019190915260038101546060830152600401546001600160a01b0316608082015290565b6000838152600360205260408120600981015460ff161580610d78575080600701548410155b15610d87576000915050610865565b505060009283526004602090815260408085209385529290529120541490565b600080546001600160a01b0316331480610dd057503360009081526002602052604090205460ff165b610dec5760405162461bcd60e51b815260040161045d90611a83565b6000858152600360205260409020600981015460ff16610e1e5760405162461bcd60e51b815260040161045d90611aff565b600381015463ffffffff90811690861610610e875760405162461bcd60e51b8152602060048201526024808201527f436861696e526f7574653a206c696e654974656d4964206f7574206f6620626f604482015263756e647360e01b606482015260840161045d565b83610ee45760405162461bcd60e51b815260206004820152602760248201527f436861696e526f7574653a20657870656e7365486173682063616e6e6f7420626044820152666520656d70747960c81b606482015260840161045d565b60008311610f485760405162461bcd60e51b815260206004820152602b60248201527f436861696e526f7574653a20657870656e736520616d6f756e74206d7573742060448201526a626520706f73697469766560a81b606482015260840161045d565b60008481526007602052604090205460ff1615610fbb5760405162461bcd60e51b815260206004820152602b60248201527f436861696e526f7574653a206475706c696361746520657870656e736520686160448201526a1cda081c995a9958dd195960aa1b606482015260840161045d565b60016007600086815260200190815260200160002060006101000a81548160ff021916908315150217905550806008015491506040518060a001604052808663ffffffff168152602001858152602001848152602001428152602001336001600160a01b031681525060056000888152602001908152602001600020600084815260200190815260200160002060008201518160000160006101000a81548163ffffffff021916908363ffffffff16021790555060208201518160010155604082015181600201556060820151816003015560808201518160040160006101000a8154816001600160a01b0302191690836001600160a01b03160217905550905050828160060160008282546110d19190611b58565b90915550506008810180549060006110e883611ae6565b91905055508463ffffffff1682877fe0b8d68c575c049a6942a234a2ce11610b590522485cfa9b12a779ce82dbf98787874260405161113a939291909283526020830191909152604082015260600190565b60405180910390a450949350505050565b600083815260036020526040902060098101546060919060ff166111815760405162461bcd60e51b815260040161045d90611aff565b806008015484101580611192575082155b156111f057604080516000808252602082019092529061071b565b6040805160a0810182526000808252602080830182905292820181905260608201819052608082015282526000199092019101816111ad57905050915050610865565b60006111fc8486611b58565b90508160080154811115611211575060088101545b600061121d8683611b6b565b90508067ffffffffffffffff81111561123857611238611b42565b60405190808252806020026020018201604052801561129157816020015b6040805160a0810182526000808252602080830182905292820181905260608201819052608082015282526000199092019101816112565790505b50935060005b81811015610860576000888152600560205260408120906112b8838a611b58565b81526020808201929092526040908101600020815160a081018352815463ffffffff16815260018201549381019390935260028101549183019190915260038101546060830152600401546001600160a01b03166080820152855186908390811061132557611325611b7e565b6020026020010181905250808061133b90611ae6565b915050611297565b6000546001600160a01b0316331461136d5760405162461bcd60e51b815260040161045d90611b94565b6001600160a01b0381166113d85760405162461bcd60e51b815260206004820152602c60248201527f436861696e526f7574653a206e6577206f776e65722063616e6e6f742062652060448201526b7a65726f206164647265737360a01b606482015260840161045d565b600080546001600160a01b038381166001600160a01b031983168117845580845260026020526040808520805460ff1916600117905551919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b6000838152600360205260408120600981015460ff161580611464575080600801548410155b15611473576000915050610865565b505060009283526005602090815260408085209385529290529120600101541490565b600080546001600160a01b03163314806114bf57503360009081526002602052604090205460ff165b6114db5760405162461bcd60e51b815260040161045d90611a83565b6000848152600360205260409020600981015460ff1661150d5760405162461bcd60e51b815260040161045d90611aff565b8361156a5760405162461bcd60e51b815260206004820152602760248201527f436861696e526f7574653a2072656365697074486173682063616e6e6f7420626044820152666520656d70747960c81b606482015260840161045d565b600083116115cf5760405162461bcd60e51b815260206004820152602c60248201527f436861696e526f7574653a20646f6e6174696f6e20616d6f756e74206d75737460448201526b20626520706f73697469766560a01b606482015260840161045d565b60008481526006602052604090205460ff16156116425760405162461bcd60e51b815260206004820152602b60248201527f436861696e526f7574653a206475706c6963617465207265636569707420686160448201526a1cda081c995a9958dd195960aa1b606482015260840161045d565b60008481526006602090815260408083208054600160ff199091168117909155600785015482516080810184528981528085018981524282860190815233606084019081528d895260048852868920858a52909752948720915182555192810192909255915160028201559151600390920180546001600160a01b0319166001600160a01b0390931692909217909155600583018054919450859290916116ea908490611b58565b909155505060078101805490600061170183611ae6565b909155505060408051858152602081018590524291810191909152829086907f512300ec63c196633432bbdb272674d4829f889b015cc338db27f19a4155f1ac90606001610675565b60006020828403121561175c57600080fd5b5035919050565b803563ffffffff8116811461177757600080fd5b919050565b60008060006060848603121561179157600080fd5b83359250602084013591506117a860408501611763565b90509250925092565b6000806000606084860312156117c657600080fd5b505081359360208301359350604090920135919050565b6020808252825182820181905260009190848201906040850190845b81811015611846576118338385518051825260208082015190830152604080820151908301526060908101516001600160a01b0316910152565b92840192608092909201916001016117f9565b50909695505050505050565b80356001600160a01b038116811461177757600080fd5b60006020828403121561187b57600080fd5b61086582611852565b6000806040838503121561189757600080fd5b6118a083611852565b9150602083013580151581146118b557600080fd5b809150509250929050565b60006101608201905082518252602083015160208301526040830151604083015260608301516118f8606084018263ffffffff169052565b50608083015161191360808401826001600160a01b03169052565b5060a083015160a083015260c083015160c083015260e083015160e08301526101008084015181840152506101208084015181840152506101408084015161195e8285018215159052565b505092915050565b6000806040838503121561197957600080fd5b50508035926020909101359150565b8151815260208083015190820152604080830151908201526060808301516001600160a01b03169082015260808101610c27565b805163ffffffff1682526020808201519083015260408082015190830152606080820151908301526080908101516001600160a01b0316910152565b60a08101610c2782846119bc565b60008060008060808587031215611a1c57600080fd5b84359350611a2c60208601611763565b93969395505050506040820135916060013590565b6020808252825182820181905260009190848201906040850190845b8181101561184657611a708385516119bc565b9284019260a09290920191600101611a5d565b6020808252602d908201527f436861696e526f7574653a2063616c6c6572206973206e6f7420617574686f7260408201526c697a656420746f20777269746560981b606082015260800190565b634e487b7160e01b600052601160045260246000fd5b600060018201611af857611af8611ad0565b5060010190565b60208082526023908201527f436861696e526f7574653a2063616d706169676e20646f6573206e6f742065786040820152621a5cdd60ea1b606082015260800190565b634e487b7160e01b600052604160045260246000fd5b80820180821115610c2757610c27611ad0565b81810381811115610c2757610c27611ad0565b634e487b7160e01b600052603260045260246000fd5b60208082526023908201527f436861696e526f7574653a2063616c6c6572206973206e6f7420746865206f776040820152623732b960e91b60608201526080019056fea264697066735822122095a7975896e71a799bbc64cff1cf75c30152555b39280c1ea3a8867279d3e0a564736f6c63430008140033"
+}
