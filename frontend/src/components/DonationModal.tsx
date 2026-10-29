@@ -14,7 +14,9 @@ import {
 import confetti from "canvas-confetti";
 import { CampaignData, DonationRecord } from "../lib/store";
 import { computeDonationReceiptHash } from "../lib/crypto";
-import { MST_TESTNET } from "../lib/constants";
+import { MST_TESTNET, CONTRACT_ADDRESS_TESTNET } from "../lib/constants";
+import { recordDonationViaBridgeKey } from "../lib/mst";
+import { walletManager } from "../lib/wallet";
 
 interface DonationModalProps {
   campaign: CampaignData;
@@ -62,13 +64,30 @@ export function DonationModal({
         timestamp,
       });
 
-      // 3. Attempt backend relay or client submission
-      let onChainTxHash = `0x${Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("")}`;
-      let explorerUrl = `${MST_TESTNET.blockExplorerUrl}/tx/${onChainTxHash}`;
+      // 3. Submit real on-chain transaction via BridgeKey wallet or backend relayer
+      let onChainTxHash = "";
+      let explorerUrl = "";
 
-      try {
+      // Check if BridgeKey wallet is available
+      const bridgeKeyProvider = await walletManager.getBridgeKeyProvider().catch(() => null);
+      if (bridgeKeyProvider) {
+        try {
+          const contractAddress = CONTRACT_ADDRESS_TESTNET || "";
+          const result = await recordDonationViaBridgeKey(
+            contractAddress,
+            campaign.id,
+            receiptHash,
+            amount
+          );
+          onChainTxHash = result.txHash;
+          explorerUrl = result.explorerUrl;
+        } catch (bkErr: any) {
+          console.warn("BridgeKey signing deferred to relayer:", bkErr);
+        }
+      }
+
+      // If BridgeKey not used or yielded no txHash, call backend relayer
+      if (!onChainTxHash) {
         const relayRes = await fetch("/api/relay", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -86,10 +105,12 @@ export function DonationModal({
         if (relayJson.success && relayJson.data?.txHash) {
           onChainTxHash = relayJson.data.txHash;
           explorerUrl = relayJson.data.explorerUrl;
+        } else {
+          throw new Error(
+            relayJson.error ||
+              "Could not record transaction on MST Blockchain. Please connect your BridgeKey wallet or ensure relayer has tMSTC gas funds."
+          );
         }
-      } catch (e) {
-        // Fallback for demo when backend keys are awaiting user input
-        console.warn("Relay fallback active:", e);
       }
 
       // Record to store

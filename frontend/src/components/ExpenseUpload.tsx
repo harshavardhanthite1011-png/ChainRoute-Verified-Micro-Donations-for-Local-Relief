@@ -20,7 +20,9 @@ import {
 import { CampaignData, ExpenseRecord } from "../lib/store";
 import { runAutomatedPreFlightChecks, PreFlightCheckReport } from "../lib/fraud-engine";
 import { computeExpenseHash, canonicalSha256 } from "../lib/crypto";
-import { MST_TESTNET, APPROVED_VENDORS } from "../lib/constants";
+import { MST_TESTNET, APPROVED_VENDORS, CONTRACT_ADDRESS_TESTNET } from "../lib/constants";
+import { recordExpenseViaBridgeKey } from "../lib/mst";
+import { walletManager } from "../lib/wallet";
 
 interface ExpenseUploadProps {
   campaigns: CampaignData[];
@@ -161,13 +163,31 @@ export function ExpenseUpload({
         deliveryPhotoHash,
       });
 
-      // Submit on-chain via backend relayer or simulated real testnet tx
-      let onChainTxHash = `0x${Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join("")}`;
-      let explorerUrl = `${MST_TESTNET.blockExplorerUrl}/tx/${onChainTxHash}`;
+      // Submit on-chain via BridgeKey wallet or backend relayer
+      let onChainTxHash = "";
+      let explorerUrl = "";
 
-      try {
+      // Check if BridgeKey wallet is available
+      const bridgeKeyProvider = await walletManager.getBridgeKeyProvider().catch(() => null);
+      if (bridgeKeyProvider) {
+        try {
+          const contractAddress = CONTRACT_ADDRESS_TESTNET || "";
+          const result = await recordExpenseViaBridgeKey(
+            contractAddress,
+            currentCampaign.id,
+            currentLineItem.id,
+            expenseHash,
+            amount
+          );
+          onChainTxHash = result.txHash;
+          explorerUrl = result.explorerUrl;
+        } catch (bkErr: any) {
+          console.warn("BridgeKey signing deferred to relayer:", bkErr);
+        }
+      }
+
+      // If BridgeKey not used or yielded no txHash, call backend relayer
+      if (!onChainTxHash) {
         const relayRes = await fetch("/api/relay", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -186,9 +206,12 @@ export function ExpenseUpload({
         if (relayJson.success && relayJson.data?.txHash) {
           onChainTxHash = relayJson.data.txHash;
           explorerUrl = relayJson.data.explorerUrl;
+        } else {
+          throw new Error(
+            relayJson.error ||
+              "Could not record expense on MST Blockchain. Please connect your BridgeKey wallet or ensure relayer has tMSTC gas funds."
+          );
         }
-      } catch (e) {
-        console.warn("Relayer fallback active:", e);
       }
 
       const newExpenseRecord: ExpenseRecord = {
