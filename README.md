@@ -104,7 +104,33 @@ ChainRoute enforces a 5-gate pipeline before an expense can touch the blockchain
 
 ---
 
-## 7. Setup & Run Instructions
+## 7. Deployed Contracts & Verified On-Chain Evidence
+
+Official deployments and verified live transactions on **MST Testnet (Chain ID `91562037`)**:
+
+### Core Contract Deployment
+| Property | Value |
+| :--- | :--- |
+| **Contract Name** | `ChainRouteLedger` |
+| **Network** | MST Testnet (Chain ID `91562037`) |
+| **Contract Address** | [`0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45`](https://testnet.mstscan.com/address/0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45) |
+| **Deployer Address** | `0x42793d66b354FF17AB6710bAF369F6838A6F5378` |
+| **Deployment Tx Hash** | [`0xb0c9858018932d62cb3981e3ed2bd471aa952487f43c3c3f6829bd87a3f4c1b8`](https://testnet.mstscan.com/tx/0xb0c9858018932d62cb3981e3ed2bd471aa952487f43c3c3f6829bd87a3f4c1b8) |
+| **Block Number** | `6666708` |
+| **Status** | ✅ SUCCESS (status: 1) |
+
+### Verified Live Testnet Transactions (P0 Core Flow)
+| Transaction Type | Function Called | Parameters / Hash Fingerprint | Tx Hash | MSTScan Link | Block |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Create Campaign** | `createCampaign` | Budget Hash (Line items table), Goal: ₹40,000, Items: 3 | `0x94f5e4207f01a0997974151a1af94832829ed5d1fb606687985c9ea3266c592e` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x94f5e4207f01a0997974151a1af94832829ed5d1fb606687985c9ea3266c592e) | `6666737` |
+| **2. Record Donation** | `recordDonation` | Campaign ID: 1, Receipt Hash (SHA-256), Amount: ₹10,000 | `0xefa1086d42f4dbbfc4b76a9011eaf696637714c0f90722cd66529fed9f64b5ad` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xefa1086d42f4dbbfc4b76a9011eaf696637714c0f90722cd66529fed9f64b5ad) | `6666740` |
+| **3. Record Expense** | `recordExpense` | Campaign ID: 1, Line Item ID: 0 (Rice), Expense Hash, Amount: ₹6,000 | `0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96) | `6666742` |
+
+> Complete deployment notes and explorer verification details are documented in [DEPLOYMENTS.md](DEPLOYMENTS.md).
+
+---
+
+## 8. Setup & Run Instructions
 
 ### Prerequisites
 - Node.js v20+ or v22+
@@ -113,16 +139,16 @@ ChainRoute enforces a 5-gate pipeline before an expense can touch the blockchain
 
 ### 1. Clone & Configure
 ```bash
-git clone <repo-url>
-cd "MST Blockchain Project"
+git clone https://github.com/shivammpatil2007-star/ChainRoute-Verified-Micro-Donations-for-Local-Relief.git
+cd ChainRoute-Verified-Micro-Donations-for-Local-Relief
 cp .env.example .env
 ```
 
-Set your deployer private key in `.env`:
+Configure your testnet deployer private key in `.env`:
 ```env
 PRIVATE_KEY=your_testnet_private_key_here
 ```
-*(Claim free tMSTC tokens at [https://faucet.mstblockchain.com](https://faucet.mstblockchain.com)).*
+*(Claim free tMSTC tokens at [https://faucet.mstblockchain.com](https://faucet.mstblockchain.com) or [https://faucet.masterstroke.academy](https://faucet.masterstroke.academy)).*
 
 ### 2. Compile & Test Smart Contracts
 ```bash
@@ -133,15 +159,22 @@ npm test
 ```
 *Expected: 17 passing tests covering access control, duplicate prevention, and append-only invariants.*
 
-### 3. Deploy to MST Testnet
+### 3. Deploy & Interact on MST Testnet (Optional)
 ```bash
+# Deploy fresh contract instance
 npm run deploy:testnet
-```
-*The script outputs the contract address, transaction hash, and saves details to `contracts/deployments/mstTestnet.json`.*
 
-### 4. Run Frontend
+# Run the 3-step core transaction suite
+npx hardhat run scripts/interact.ts --network mstTestnet
+
+# Verify any transaction on MST Testnet
+cd ..
+node scripts/verify-tx.js <txHash> testnet
+```
+
+### 4. Run Frontend Locally
 ```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -149,5 +182,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 8. Video Demonstration Script
-See [DEMO.md](DEMO.md) for the complete 2.5-minute video walkthrough guide covering the live flow, fraud rejection simulator, and MSTScan explorer verification.
+## 9. Video Demonstration
+- **Walkthrough Video**: *[Watch Demo Video (YouTube / Loom) — Video Link Placeholder](https://github.com/shivammpatil2007-star/ChainRoute-Verified-Micro-Donations-for-Local-Relief)*
+- **Demo Script**: See [DEMO.md](DEMO.md) for the complete 2.5-minute video walkthrough guide covering the live flow, fraud rejection simulator, and MSTScan explorer verification.
