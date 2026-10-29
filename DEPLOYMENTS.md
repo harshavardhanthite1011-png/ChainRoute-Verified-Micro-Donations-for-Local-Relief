@@ -48,3 +48,12 @@ This document records the official on-chain deployments and verifiable transacti
 | **Deployment Tx Hash** | *Pending* |
 | **Explorer Link** | *Pending* |
 | **Date Deployed** | *Pending* |
+
+---
+
+## 3. Mainnet Key Hygiene & Security Policy
+> 🔒 **Security Notice - Key Compromise Prevention**:
+> Any private key utilized during development or testnet deployments must be treated as **COMPROMISED**.
+> Under no circumstances should testnet deployer credentials or keys from development environments be used for MST Mainnet.
+> Prior to mainnet deployment, a **dedicated, fresh deployer key** must be generated in a secure environment and funded exclusively for the official contract deployment.
+

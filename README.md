@@ -56,7 +56,20 @@ For complete technical notes and architectural defense points for judges, see [d
 
 ---
 
-## 4. MST Blockchain Network Specifications
+## 4. Technology Stack
+
+- **Blockchain Platform**: MST Blockchain Layer 1 (EVM-compatible)
+- **Smart Contracts**: Solidity `0.8.20`, Hardhat Development Environment, Ethers.js `v6`
+- **Frontend Framework**: Next.js 14 (App Router), React, TypeScript
+- **Styling & UI**: Tailwind CSS, Glassmorphic Design System, Lucide React Icons, Canvas Confetti
+- **Wallet Provider**: BridgeKey Official Extension (`io.bridgekey.wallet`, EIP-6963 Direct Discovery)
+- **Cryptographic Security**: Client-side Canonical SHA-256 Fingerprinting (`crypto.createHash` / WebCrypto)
+- **Verification Engine**: P5 Automated Pre-Flight Fraud Engine & On-Chain Replay Protection
+- **Transaction Verification**: Live MST JSON-RPC Query CLI Tool (`scripts/verify-tx.ts`)
+
+---
+
+## 5. MST Blockchain Network Specifications
 
 | Parameter | MST Testnet | MST Mainnet |
 | :--- | :--- | :--- |
@@ -185,3 +198,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 9. Video Demonstration
 - **Walkthrough Video**: *[Watch Demo Video (YouTube / Loom) — Video Link Placeholder](https://github.com/shivammpatil2007-star/ChainRoute-Verified-Micro-Donations-for-Local-Relief)*
 - **Demo Script**: See [DEMO.md](DEMO.md) for the complete 2.5-minute video walkthrough guide covering the live flow, fraud rejection simulator, and MSTScan explorer verification.
+
+---
+
+## 10. Security & Mainnet Key Hygiene Policy
+
+> 🔒 **Critical Security Rule**:
+> - Any deployer private key used in `.env` during local testing or testnet development must be treated as **COMPROMISED**.
+> - **MST Mainnet Requirement**: When deploying to MST Mainnet (`Chain ID 4646`), teams must generate a **fresh, isolated private key** that has never been exposed in development files or testnet faucets.
+> - **In-Browser Signing**: The ChainRoute frontend does not store or process private keys; all client transactions are signed directly via the official BridgeKey browser wallet.
+
