@@ -1,0 +1,9 @@
+{
+  "network": "mstTestnet",
+  "chainId": "91562037",
+  "contractAddress": "0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45",
+  "deployer": "0x42793d66b354FF17AB6710bAF369F6838A6F5378",
+  "transactionHash": "0xb0c9858018932d62cb3981e3ed2bd471aa952487f43c3c3f6829bd87a3f4c1b8",
+  "explorerUrl": "https://testnet.mstscan.com/address/0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45",
+  "deployedAt": "2026-10-29T09:21:53.191Z"
+}
