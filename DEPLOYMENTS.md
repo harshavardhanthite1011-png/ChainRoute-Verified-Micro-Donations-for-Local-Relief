@@ -38,6 +38,8 @@ This document records the official on-chain deployments and verifiable transacti
 | **1. Create Campaign** | `createCampaign` | Budget Hash (Line items table), Goal: ₹40,000, Items Count: 3 | `0x94f5e4207f01a0997974151a1af94832829ed5d1fb606687985c9ea3266c592e` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x94f5e4207f01a0997974151a1af94832829ed5d1fb606687985c9ea3266c592e) | ✅ Block 6666737 |
 | **2. Record Donation** | `recordDonation` | Campaign ID: 1, Receipt Hash (SHA-256), Amount: ₹10,000 | `0xefa1086d42f4dbbfc4b76a9011eaf696637714c0f90722cd66529fed9f64b5ad` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xefa1086d42f4dbbfc4b76a9011eaf696637714c0f90722cd66529fed9f64b5ad) | ✅ Block 6666740 |
 | **3. Record Expense** | `recordExpense` | Campaign ID: 1, Line Item ID: 0 (Rice), Expense Hash, Amount: ₹6,000 | `0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96) | ✅ Block 6666742 |
+| **4. Authorize Relayer** | `setAuthorizedWriter` | Authorized Account: `0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D`, Status: `true` | `0xc23b98c8471a1d089b7894aa63de30a904a532939ab5e240add279ff842b9707` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xc23b98c8471a1d089b7894aa63de30a904a532939ab5e240add279ff842b9707) | ✅ Block 6698781 |
+| **5. Fund Relayer Gas** | *Transfer (tMSTC)* | Relayer: `0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D`, Amount: 1.0 tMSTC | `0x606d09c876721a3ff41a8eb8d4b7b378e5c59b10f19f0e270eee07bee3a138f7` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x606d09c876721a3ff41a8eb8d4b7b378e5c59b10f19f0e270eee07bee3a138f7) | ✅ Block 6698804 |
 
 ---
 

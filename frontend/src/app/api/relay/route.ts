@@ -178,11 +178,12 @@ export async function POST(req: NextRequest) {
     const wallet = new ethers.Wallet(formattedKey, provider);
 
     const balance = await provider.getBalance(wallet.address);
-    if (balance === BigInt(0)) {
+    const minRequiredGas = ethers.parseEther("0.005");
+    if (balance < minRequiredGas) {
       return NextResponse.json(
         {
           success: false,
-          error: "Relayer gas reserve exhausted. Please use BridgeKey wallet or request faucet tokens.",
+          error: `Relayer wallet balance (${ethers.formatEther(balance)} tMSTC) is insufficient for gas fees. Please fund relayer address ${wallet.address} with testnet tokens at ${MST_TESTNET.faucetUrl}`,
         },
         { status: 503 }
       );
