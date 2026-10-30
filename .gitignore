@@ -40,3 +40,6 @@ Thumbs.db
 
 # Large binary / non-code assets
 *.pdf
+.vercel/
+frontend/.vercel/
+
