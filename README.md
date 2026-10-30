@@ -152,7 +152,7 @@ Official deployments and verified live transactions on **MST Testnet (Chain ID `
 
 ### 1. Clone & Configure
 ```bash
-git clone https://github.com/shivammpatil2007-star/ChainRoute-Verified-Micro-Donations-for-Local-Relief.git
+git clone https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief.git
 cd ChainRoute-Verified-Micro-Donations-for-Local-Relief
 cp .env.example .env
 ```
@@ -196,7 +196,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ---
 
 ## 9. Video Demonstration
-- **Walkthrough Video**: *[Watch Demo Video (YouTube / Loom) — Video Link Placeholder](https://github.com/shivammpatil2007-star/ChainRoute-Verified-Micro-Donations-for-Local-Relief)*
+- **Walkthrough Video**: *[Watch Demo Video (YouTube / Loom) — Video Link Placeholder](https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief)*
 - **Demo Script**: See [DEMO.md](DEMO.md) for the complete 2.5-minute video walkthrough guide covering the live flow, fraud rejection simulator, and MSTScan explorer verification.
 
 ---
@@ -206,5 +206,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 > 🔒 **Critical Security Rule**:
 > - Any deployer private key used in `.env` during local testing or testnet development must be treated as **COMPROMISED**.
 > - **MST Mainnet Requirement**: When deploying to MST Mainnet (`Chain ID 4646`), teams must generate a **fresh, isolated private key** that has never been exposed in development files or testnet faucets.
-> - **In-Browser Signing**: The ChainRoute frontend does not store or process private keys; all client transactions are signed directly via the official BridgeKey browser wallet.
+> - **In-Browser Signing Primary**: The ChainRoute frontend prioritizes client-side transaction signing via the official BridgeKey browser wallet (`io.bridgekey.wallet`), meaning no private key ever enters the web application.
+> - **Server-Side Relayer Hardening**: For sponsored or automated demo flows, the backend `/api/relay` route is hardened with:
+>   - Strict input validation on all actions and hex parameters (`createCampaign`, `recordDonation`, `recordExpense`).
+>   - Origin and host verification preventing cross-origin abuse.
+>   - Per-IP sliding-window rate limiting (10 req/min).
+>   - **Dedicated Low-Balance Key**: The relayer operates under a dedicated, isolated relayer wallet holding only minimal gas reserves (e.g. 1-2 tMSTC). It is never given administrator or ownership rights on-chain.
+>   - If `RELAY_DISABLED=true` is set, the relayer route is shut down completely and all submissions require direct BridgeKey wallet connection.
+
 
