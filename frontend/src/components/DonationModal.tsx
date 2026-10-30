@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   CreditCard,
@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Sparkles,
   Lock,
+  AlertTriangle,
+  Wallet,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CampaignData, DonationRecord } from "../lib/store";
@@ -25,6 +27,15 @@ interface DonationModalProps {
   onDonationSuccess: (donation: DonationRecord) => void;
 }
 
+type TxStage = "IDLE" | "AWAITING_SIGNATURE" | "SUBMITTED" | "CONFIRMING" | "CONFIRMED" | "FAILED";
+
+interface RelayStatus {
+  enabled: boolean;
+  relayerAddress?: string;
+  balance?: string;
+  reason?: string;
+}
+
 export function DonationModal({
   campaign,
   isOpen,
@@ -36,19 +47,94 @@ export function DonationModal({
   const [donorEmail, setDonorEmail] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "CARD">("UPI");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Status and stages
+  const [txStage, setTxStage] = useState<TxStage>("IDLE");
+  const [stageMessage, setStageMessage] = useState<string>("");
+  const [submittedTxHash, setSubmittedTxHash] = useState<string>("");
+
+  // Relayer status from /api/relay/status
+  const [relayStatus, setRelayStatus] = useState<RelayStatus | null>(null);
+  const [isCheckingRelay, setIsCheckingRelay] = useState<boolean>(true);
+
+  // Connected BridgeKey account
+  const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
+
   const [successData, setSuccessData] = useState<{
     receiptHash: string;
     txHash: string;
     explorerUrl: string;
+    blockNumber?: number;
   } | null>(null);
+
+  // Fetch relayer status and auto-detect wallet when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    setErrorMessage(null);
+    setTxStage("IDLE");
+    setSubmittedTxHash("");
+
+    async function checkStatus() {
+      setIsCheckingRelay(true);
+      try {
+        const res = await fetch("/api/relay/status");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setRelayStatus(data);
+        } else {
+          if (isMounted) setRelayStatus({ enabled: false, reason: "Relayer status offline" });
+        }
+      } catch {
+        if (isMounted) setRelayStatus({ enabled: false, reason: "Failed to connect to relayer service" });
+      } finally {
+        if (isMounted) setIsCheckingRelay(false);
+      }
+
+      // Check BridgeKey connection
+      try {
+        const conn = await walletManager.autoReconnect(false);
+        if (conn && isMounted) {
+          setConnectedAccount(conn.account);
+        }
+      } catch {
+        // Silent catch
+      }
+    }
+
+    checkStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const quickAmounts = [500, 1000, 2500, 5000];
 
+  const handleConnectWallet = async () => {
+    setErrorMessage(null);
+    try {
+      const conn = await walletManager.connectBridgeKey(false);
+      setConnectedAccount(conn.account);
+    } catch (err: any) {
+      if (err.message === "BRIDGEKEY_NOT_INSTALLED") {
+        setErrorMessage("BridgeKey extension is not detected. Please install BridgeKey from https://bridgekey.io or the Chrome Web Store.");
+      } else {
+        setErrorMessage("Wallet connection failed: " + (err?.message || "User cancelled"));
+      }
+    }
+  };
+
   const handlePayAndRecord = async () => {
     if (amount <= 0) return;
     setIsProcessing(true);
+    setErrorMessage(null);
+    setTxStage("IDLE");
+    setSubmittedTxHash("");
 
     try {
       // 1. Simulate Payment Gateway confirmation in test mode
@@ -64,30 +150,16 @@ export function DonationModal({
         timestamp,
       });
 
-      // 3. Submit real on-chain transaction via BridgeKey wallet or backend relayer
       let onChainTxHash = "";
       let explorerUrl = "";
+      let blockNumber: number | undefined;
 
-      // Check if BridgeKey wallet is available
-      const bridgeKeyProvider = await walletManager.getBridgeKeyProvider().catch(() => null);
-      if (bridgeKeyProvider) {
-        try {
-          const contractAddress = CONTRACT_ADDRESS_TESTNET || "";
-          const result = await recordDonationViaBridgeKey(
-            contractAddress,
-            campaign.id,
-            receiptHash,
-            amount
-          );
-          onChainTxHash = result.txHash;
-          explorerUrl = result.explorerUrl;
-        } catch (bkErr: any) {
-          console.warn("BridgeKey signing deferred to relayer:", bkErr);
-        }
-      }
+      // 3. Flow determination: Relayer vs Direct BridgeKey
+      if (relayStatus?.enabled) {
+        // Preferred path: Use hardened server relayer
+        setTxStage("SUBMITTED");
+        setStageMessage("Broadcasting sponsored transaction to MST Testnet...");
 
-      // If BridgeKey not used or yielded no txHash, call backend relayer
-      if (!onChainTxHash) {
         const relayRes = await fetch("/api/relay", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -105,15 +177,56 @@ export function DonationModal({
         if (relayJson.success && relayJson.data?.txHash) {
           onChainTxHash = relayJson.data.txHash;
           explorerUrl = relayJson.data.explorerUrl;
+          blockNumber = relayJson.data.blockNumber;
+          setSubmittedTxHash(onChainTxHash);
+          setTxStage("CONFIRMED");
+          setStageMessage(`Confirmed in block #${blockNumber}`);
         } else {
           throw new Error(
             relayJson.error ||
-              "Could not record transaction on MST Blockchain. Please connect your BridgeKey wallet or ensure relayer has tMSTC gas funds."
+              "Could not record transaction on MST Blockchain. Please verify relayer gas balance."
           );
         }
+      } else {
+        // Relayer is disabled: Must use BridgeKey
+        if (!connectedAccount) {
+          throw new Error("Server relayer is disabled. Please connect your BridgeKey wallet to sign directly.");
+        }
+
+        setTxStage("AWAITING_SIGNATURE");
+        setStageMessage("Please approve transaction in BridgeKey extension...");
+
+        const contractAddress = CONTRACT_ADDRESS_TESTNET || "";
+        const result = await recordDonationViaBridgeKey(
+          contractAddress,
+          campaign.id,
+          receiptHash,
+          amount,
+          false,
+          (status, data) => {
+            if (status === "AWAITING_APPROVAL") {
+              setTxStage("AWAITING_SIGNATURE");
+              setStageMessage("Awaiting BridgeKey approval...");
+            } else if (status === "SUBMITTED") {
+              setTxStage("SUBMITTED");
+              setSubmittedTxHash(data?.txHash || "");
+              setStageMessage("Transaction broadcast! Awaiting block confirmation...");
+            } else if (status === "CONFIRMING") {
+              setTxStage("CONFIRMING");
+              setStageMessage("Confirming block on MST Blockchain...");
+            } else if (status === "CONFIRMED") {
+              setTxStage("CONFIRMED");
+              setStageMessage(`Mined in block #${data?.blockNumber}`);
+            }
+          }
+        );
+
+        onChainTxHash = result.txHash;
+        explorerUrl = result.explorerUrl;
+        blockNumber = result.blockNumber;
       }
 
-      // Record to store
+      // Record to local store
       const record: DonationRecord = {
         id: `DON-${Date.now().toString().slice(-4)}`,
         campaignId: campaign.id,
@@ -133,16 +246,26 @@ export function DonationModal({
         receiptHash,
         txHash: onChainTxHash,
         explorerUrl,
+        blockNumber,
       });
 
-      // Trigger Confetti
       confetti({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
       });
     } catch (err: any) {
-      alert("Donation processing failed: " + err.message);
+      setTxStage("FAILED");
+      const rawMsg = err?.message || String(err);
+      if (rawMsg.includes("caller is not authorized to write")) {
+        setErrorMessage(
+          "Transaction reverted on-chain: The smart contract restricts writes to authorized addresses. For public donor access, the server relayer must be enabled."
+        );
+      } else if (rawMsg.includes("user rejected") || rawMsg.includes("ACTION_REJECTED")) {
+        setErrorMessage("Transaction was cancelled in your wallet.");
+      } else {
+        setErrorMessage(rawMsg);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -159,7 +282,7 @@ export function DonationModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Verified Donation</h3>
-              <p className="text-xs text-slate-400">Fingerprinted directly on MST Testnet</p>
+              <p className="text-xs text-slate-400">Fingerprinted directly on MST Testnet (Chain ID: 91562037)</p>
             </div>
           </div>
           <button
@@ -172,6 +295,23 @@ export function DonationModal({
 
         {/* Content */}
         <div className="p-6 space-y-5">
+          {/* Inline Error Banner */}
+          {errorMessage && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start justify-between gap-2 animate-in fade-in">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-rose-400 hover:text-rose-200 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {successData ? (
             <div className="space-y-4 text-center py-4">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
@@ -192,6 +332,12 @@ export function DonationModal({
                   <span className="text-slate-400 block text-[10px] uppercase">MST Blockchain Tx Hash:</span>
                   <span className="text-cyan-300 break-all">{successData.txHash}</span>
                 </div>
+                {successData.blockNumber && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase">Block Number:</span>
+                    <span className="text-slate-200">{successData.blockNumber}</span>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-center gap-3">
@@ -316,33 +462,83 @@ export function DonationModal({
                 </div>
               </div>
 
-              {/* Notice */}
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/20 flex items-start gap-2 text-[11px] text-slate-300">
-                <Lock className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>
-                  Every donation triggers automated SHA-256 fingerprinting on the MST Blockchain append-only ledger. You will receive an on-chain receipt hash to track your funds.
-                </span>
+              {/* Relayer & Wallet Execution Info */}
+              <div className="p-3 rounded-xl bg-slate-900/70 border border-white/10 text-[11px] space-y-1.5">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>On-Chain Execution Route:</span>
+                  </span>
+                  {isCheckingRelay ? (
+                    <span className="text-slate-500">Checking relayer...</span>
+                  ) : relayStatus?.enabled ? (
+                    <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Automated Gas Relayer (Zero-Gas)</span>
+                    </span>
+                  ) : (
+                    <span className="text-amber-400 font-semibold">
+                      Direct Wallet Signing (BridgeKey)
+                    </span>
+                  )}
+                </div>
+
+                {!relayStatus?.enabled && !isCheckingRelay && (
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    {connectedAccount ? (
+                      <>Signing directly via connected BridgeKey: <span className="font-mono text-cyan-300">{connectedAccount.slice(0, 6)}...{connectedAccount.slice(-4)}</span></>
+                    ) : (
+                      <>Relayer is disabled. Please connect your BridgeKey wallet to record your donation on-chain.</>
+                    )}
+                  </p>
+                )}
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="button"
-                onClick={handlePayAndRecord}
-                disabled={isProcessing || amount <= 0}
-                className="w-full py-3 px-4 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Recording to MST Blockchain...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Confirm & Record ₹{amount.toLocaleString("en-IN")} On-Chain</span>
-                  </>
-                )}
-              </button>
+              {/* Live Tx Stage Banner */}
+              {isProcessing && (
+                <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center gap-2.5">
+                  <RefreshCw className="w-4 h-4 animate-spin text-cyan-400 flex-shrink-0" />
+                  <div className="space-y-0.5">
+                    <div className="font-semibold">{stageMessage || "Processing transaction..."}</div>
+                    {submittedTxHash && (
+                      <div className="font-mono text-[10px] text-slate-400 truncate max-w-xs">
+                        Tx: {submittedTxHash}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {!relayStatus?.enabled && !connectedAccount && !isCheckingRelay ? (
+                <button
+                  type="button"
+                  onClick={handleConnectWallet}
+                  className="w-full py-3 px-4 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-500 text-white hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span>Connect BridgeKey to Donate</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handlePayAndRecord}
+                  disabled={isProcessing || amount <= 0}
+                  className="w-full py-3 px-4 rounded-xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Recording to MST Blockchain...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirm & Record ₹{amount.toLocaleString("en-IN")} On-Chain</span>
+                      <Sparkles className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>
