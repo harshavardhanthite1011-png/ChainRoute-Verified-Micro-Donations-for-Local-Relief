@@ -132,6 +132,7 @@ Official deployments and verified live transactions on **MST Testnet (Chain ID `
 | **Network** | MST Testnet (Chain ID `91562037`) |
 | **Contract Address** | [`0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45`](https://testnet.mstscan.com/address/0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45) |
 | **Deployer Address** | `0x42793d66b354FF17AB6710bAF369F6838A6F5378` |
+| **Authorized Relayer** | `0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D` |
 | **Deployment Tx Hash** | [`0xb0c9858018932d62cb3981e3ed2bd471aa952487f43c3c3f6829bd87a3f4c1b8`](https://testnet.mstscan.com/tx/0xb0c9858018932d62cb3981e3ed2bd471aa952487f43c3c3f6829bd87a3f4c1b8) |
 | **Block Number** | `6666708` |
 | **Status** | ✅ SUCCESS (status: 1) |
@@ -144,6 +145,7 @@ Official deployments and verified live transactions on **MST Testnet (Chain ID `
 | **3. Record Expense** | `recordExpense` | Campaign ID: 1, Line Item ID: 0 (Rice), Expense Hash, Amount: ₹6,000 | `0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xe9e99b347d41860d5105e72e297b1fb84b0c6ac9bc22f64d5ebc0d40355cec96) | `6666742` |
 | **4. Authorize Relayer** | `setAuthorizedWriter` | Authorized Account: `0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D`, Status: `true` | `0xc23b98c8471a1d089b7894aa63de30a904a532939ab5e240add279ff842b9707` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xc23b98c8471a1d089b7894aa63de30a904a532939ab5e240add279ff842b9707) | `6698781` |
 | **5. Fund Relayer Gas** | *Transfer (tMSTC)* | Relayer: `0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D`, Amount: 1.0 tMSTC | `0x606d09c876721a3ff41a8eb8d4b7b378e5c59b10f19f0e270eee07bee3a138f7` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x606d09c876721a3ff41a8eb8d4b7b378e5c59b10f19f0e270eee07bee3a138f7) | `6698804` |
+| **6. Live Web Donation** | `recordDonation` | Campaign ID: 1, Receipt Hash (SHA-256), Amount: ₹500 | `0x4df1a416e177a848aeadee62f5baa1e54df3610ed30a93d9a1f947da0c150553` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x4df1a416e177a848aeadee62f5baa1e54df3610ed30a93d9a1f947da0c150553) | `6699350` |
 
 > Complete deployment notes and explorer verification details are documented in [DEPLOYMENTS.md](DEPLOYMENTS.md).
 
