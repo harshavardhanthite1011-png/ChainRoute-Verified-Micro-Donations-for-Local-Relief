@@ -6,6 +6,15 @@ This document records the official on-chain deployments and verifiable transacti
 
 ---
 
+## 0. Official Public Repository & Live Production Application
+
+- **Public GitHub Repository**: [https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief](https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief)
+- **Live Vercel Production URL**: [https://chainroute-relief.vercel.app](https://chainroute-relief.vercel.app)
+- **Deployment Platform**: Vercel (Next.js 14 App Router, Root Directory: `frontend`)
+- **Active MST Testnet Contract**: [`0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45`](https://testnet.mstscan.com/address/0x2B94E953B87ff4AA113350d8E3AEE335eAC80E45)
+
+---
+
 ## 1. MST Testnet (Chain ID: `91562037`)
 
 - **Network Name**: MST Testnet

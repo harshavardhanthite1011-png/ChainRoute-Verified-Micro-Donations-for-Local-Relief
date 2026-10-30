@@ -1,5 +1,6 @@
 # ChainRoute – Verified Micro-Donations for Local Relief
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-chainroute--relief.vercel.app-000000?style=for-the-badge&logo=vercel)](https://chainroute-relief.vercel.app)
 [![MST Blockchain](https://img.shields.io/badge/MST%20Blockchain-Layer%201-10B981?style=for-the-badge)](https://mstblockchain.com)
 [![MST Testnet](https://img.shields.io/badge/MST%20Testnet-ChainID%2091562037-06B6D4?style=for-the-badge)](https://testnet.mstscan.com)
 [![BridgeKey](https://img.shields.io/badge/Wallet-BridgeKey%20Integrated-8B5CF6?style=for-the-badge)](https://bridgekey.io)
@@ -7,6 +8,9 @@
 [![Append-Only](https://img.shields.io/badge/Ledger-Append--Only%20Guaranteed-F59E0B?style=for-the-badge)](docs/ARCHITECTURE.md)
 
 **Built by Team "Blockers" for MST Blockchain Buildathon 2.0 (Round 2: MVP Build Sprint)**
+
+🔗 **Live Production Application**: [https://chainroute-relief.vercel.app](https://chainroute-relief.vercel.app)  
+📦 **Official GitHub Repository**: [https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief](https://github.com/harshavardhanthite1011-png/ChainRoute-Verified-Micro-Donations-for-Local-Relief)
 
 ---
 
