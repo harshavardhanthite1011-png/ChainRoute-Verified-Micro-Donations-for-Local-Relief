@@ -20,8 +20,10 @@ coverage.json
 # Next.js build output
 frontend/.next/
 frontend/out/
+frontend/.vercel/
 .next/
 out/
+.vercel/
 
 # Logs & Debug
 npm-debug.log*
