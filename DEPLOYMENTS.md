@@ -47,6 +47,7 @@ This document records the official on-chain deployments and verifiable transacti
 | **9. Authorize Relayer 2** | `setAuthorizedWriter` | Relayer: `0x882DeF92E1a9E7CB4c5d6A3Fbd7bF152E622Ad87`, Status: `true` | `0xad443bfa449fc85984521d8a8f37af063094a17659bad58de4aa94b553c05265` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xad443bfa449fc85984521d8a8f37af063094a17659bad58de4aa94b553c05265) | ✅ Block 6700130 |
 | **10. Live Web Expense Stamped** | `recordExpense` | Campaign ID: 1, Line Item ID: 0, Amount: ₹35,000 | `0x26c2dfd9dea6692854d970b239ed58e40d3559005d2b9f367bf71bdbf14a8f26` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x26c2dfd9dea6692854d970b239ed58e40d3559005d2b9f367bf71bdbf14a8f26) | ✅ Block 6706395 |
 | **11. Verified Relayer Expense** | `recordExpense` | Campaign ID: 1, Line Item ID: 0, Amount: ₹1,000 | `0xeb9f2666332dc1bd2c6e4881b189c4edb6936b06f65d6a2eb70f40494420a5c0` | [MSTScan Tx](https://testnet.mstscan.com/tx/0xeb9f2666332dc1bd2c6e4881b189c4edb6936b06f65d6a2eb70f40494420a5c0) | ✅ Block 6718791 |
+| **12. Live Production Expense** | `recordExpense` | Campaign ID: 1, Line Item ID: 0, Amount: ₹1,500 | `0x4c22621d91adcf355ec24fd84fad82a1b511163541d33b22753d9efe7505885b` | [MSTScan Tx](https://testnet.mstscan.com/tx/0x4c22621d91adcf355ec24fd84fad82a1b511163541d33b22753d9efe7505885b) | ✅ Block 6719083 |
 
 ---
 
