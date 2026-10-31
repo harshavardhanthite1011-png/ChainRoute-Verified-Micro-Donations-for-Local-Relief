@@ -94,6 +94,16 @@ class WalletManager {
       return this.bridgeKeyProvider;
     }
 
+    // Direct check on window objects
+    if ((window as any).bridgekey) {
+      this.bridgeKeyProvider = (window as any).bridgekey;
+      return this.bridgeKeyProvider;
+    }
+    if ((window as any).ethereum?.isBridgeKey) {
+      this.bridgeKeyProvider = (window as any).ethereum;
+      return this.bridgeKeyProvider;
+    }
+
     this.initDiscovery();
     window.dispatchEvent(new Event("eip6963:requestProvider"));
 
@@ -110,7 +120,24 @@ class WalletManager {
           return this.bridgeKeyProvider;
         }
       }
+
+      // Check window objects during loop in case extension script loads late
+      if ((window as any).bridgekey) {
+        this.bridgeKeyProvider = (window as any).bridgekey;
+        return this.bridgeKeyProvider;
+      }
+      if ((window as any).ethereum?.isBridgeKey) {
+        this.bridgeKeyProvider = (window as any).ethereum;
+        return this.bridgeKeyProvider;
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 80));
+    }
+
+    // Fallback to window.ethereum if it exists and appears to be connected
+    if ((window as any).ethereum) {
+      this.bridgeKeyProvider = (window as any).ethereum;
+      return this.bridgeKeyProvider;
     }
 
     return null;
@@ -176,10 +203,7 @@ class WalletManager {
   } | null> {
     if (typeof window === "undefined") return null;
 
-    const savedRdns = localStorage.getItem("chainroute_connected_rdns");
-    if (savedRdns !== BRIDGEKEY_RDNS) return null;
-
-    const provider = await this.getBridgeKeyProvider(800);
+    const provider = await this.getBridgeKeyProvider(1000);
     if (!provider) return null;
 
     try {
@@ -194,6 +218,10 @@ class WalletManager {
       });
 
       this.attachProviderEvents(provider);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("chainroute_connected_rdns", BRIDGEKEY_RDNS);
+      }
 
       return {
         account: accounts[0],

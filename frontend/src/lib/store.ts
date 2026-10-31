@@ -14,9 +14,10 @@ export interface DonationRecord {
   amount: number;
   timestamp: number;
   paymentGatewayTxnId: string;
-  receiptHash: string;
+  receiptHash?: string;
   onChainTxHash?: string;
   status: "CONFIRMED" | "RECORDED_ON_CHAIN";
+  isOnChain?: boolean;
 }
 
 export interface ExpenseRecord {
@@ -36,10 +37,11 @@ export interface ExpenseRecord {
   volunteerName: string;
   volunteerLocation: string;
   timestamp: number;
-  expenseHash: string;
+  expenseHash?: string;
   onChainTxHash?: string;
   status: "PENDING_DELIVERY" | "VERIFIED_READY" | "RECORDED_ON_CHAIN";
   fraudReport?: any;
+  isOnChain?: boolean;
 }
 
 export interface CampaignData {
@@ -161,24 +163,39 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     campaignId: 1,
     donorName: "Ananya Sharma",
     donorEmail: "ananya@example.com",
-    amount: 15000,
-    timestamp: Date.now() - 86400000 * 3,
+    amount: 10000,
+    timestamp: 1730200000000,
     paymentGatewayTxnId: "pay_Nkl29xX98z001",
-    receiptHash: "0x51c726a57cf4d5a44efbe88554dc313ebfc49a21226ee41a1ad6ba6efd429a14",
-    onChainTxHash: "0x9812739182379127391827391827391827391827391827391827391827391827",
+    receiptHash: "0x35bd9ff72ab315ba2dde52afb0a2e19661bd0a67f3d6f396a62435bd820056cf",
+    onChainTxHash: "0xefa1086d42f4dbbfc4b76a9011eaf696637714c0f90722cd66529fed9f64b5ad",
     status: "RECORDED_ON_CHAIN",
+    isOnChain: true,
   },
   {
     id: "DON-002",
     campaignId: 1,
     donorName: "Rohan Varma",
     donorEmail: "rohan.v@example.com",
-    amount: 50000,
-    timestamp: Date.now() - 86400000 * 2,
+    amount: 500,
+    timestamp: 1730300000000,
     paymentGatewayTxnId: "pay_Nkl88yZ77a002",
-    receiptHash: "0x2e8f19da45012356ec39d5718a5bf2384910cfab5816da081a27e36500df7892",
-    onChainTxHash: "0xa123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    receiptHash: "0x8e98daf23b6b027387468ec1c69c91d48279580b81341a15c672c3ca424a5e04",
+    onChainTxHash: "0x4df1a416e177a848aeadee62f5baa1e54df3610ed30a93d9a1f947da0c150553",
     status: "RECORDED_ON_CHAIN",
+    isOnChain: true,
+  },
+  {
+    id: "DON-003",
+    campaignId: 2,
+    donorName: "Amitabh Sen",
+    donorEmail: "amitabh.s@example.com",
+    amount: 1000,
+    timestamp: 1730350000000,
+    paymentGatewayTxnId: "pay_Nkl99aB12c003",
+    receiptHash: "0xe750dcc98460fd80cd4ce3d76533a8c5bae54fb5a558c5a7016b71fbf4f335c2",
+    onChainTxHash: "0xfecd792c95a5403195f898f91822a2ff3852913fb1bd2b7969e4a83dd73b93c8",
+    status: "RECORDED_ON_CHAIN",
+    isOnChain: true,
   },
 ];
 
@@ -188,23 +205,24 @@ export const INITIAL_EXPENSES: ExpenseRecord[] = [
     campaignId: 1,
     lineItemId: 0,
     lineItemName: "500kg Premium Sona Masoori Rice & Pulses",
-    amount: 85000,
-    invoiceNo: "INV-2026-KA-4412",
+    amount: 35000,
+    invoiceNo: "INV-2026-KA-9912",
     vendorName: "Kisan Agro Relief Supplies",
     vendorGstin: "27AABCK1234F1Z5",
     receiverAccount: "•••• 4892",
     billImageUrl:
       "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80",
-    billHash: "0x44f128ac812931a293d9ef9238fa802193bda19293847291a823719823719283",
+    billHash: "0xcca99c203a3c43287f304799cf6e9b80c40d201616a7a4ff520cf8a58f202db7",
     deliveryPhotoUrl:
       "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
-    deliveryPhotoHash: "0x9923812983192839182391829381928391829381928391829381928391829381",
-    volunteerName: "Vikram Nair (Ground Volunteer ID: #VOL-88)",
-    volunteerLocation: "Chooralmala Camp Shelter, GPS: 11.5381° N, 76.1287° E",
-    timestamp: Date.now() - 86400000 * 2,
-    expenseHash: "0x1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c",
-    onChainTxHash: "0x777aaa111222333444555666777888999aaabbbcccdddeeefff00011122233344",
+    deliveryPhotoHash: "0xe35ac412a81a7e7f1b0a19a22bb63aacd0a8e080652d0b5b7c96db5a130efb35",
+    volunteerName: "Geetha Pillai (#VOL-62)",
+    volunteerLocation: "Meppadi Community Shelter, GPS: 11.5510° N, 76.1260° E",
+    timestamp: 1730384772000,
+    expenseHash: "0xe24632ab0d6227a428093e70f62960d21d15dd08c0377550d3f69e0709ad391f",
+    onChainTxHash: "0x26c2dfd9dea6692854d970b239ed58e40d3559005d2b9f367bf71bdbf14a8f26",
     status: "RECORDED_ON_CHAIN",
+    isOnChain: true,
   },
   {
     id: "EXP-002",
@@ -224,9 +242,8 @@ export const INITIAL_EXPENSES: ExpenseRecord[] = [
     deliveryPhotoHash: "0x11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff",
     volunteerName: "Sneha George (Medical Nurse Volunteer ID: #VOL-41)",
     volunteerLocation: "Meppadi Health Centre, GPS: 11.5512° N, 76.1245° E",
-    timestamp: Date.now() - 86400000 * 1,
-    expenseHash: "0xfe9876543210fedcba09876543210fedcba09876543210fedcba09876543210f",
-    onChainTxHash: "0x888bbb222333444555666777888999aaabbbcccdddeeefff00011122233344455",
-    status: "RECORDED_ON_CHAIN",
+    timestamp: 1730300000000,
+    status: "VERIFIED_READY",
+    isOnChain: false,
   },
 ];

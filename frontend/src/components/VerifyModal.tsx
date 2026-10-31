@@ -54,12 +54,12 @@ export function VerifyModal({ expense, isOpen, onClose }: VerifyModalProps) {
         deliveryPhotoHash: expense.deliveryPhotoHash,
       });
 
-      const onChain = expense.expenseHash;
-      const matches = verifyHashMatch(computed, onChain);
+      const onChain = expense.expenseHash || "";
+      const matches = expense.expenseHash ? verifyHashMatch(computed, onChain) : false;
 
       setVerificationResult({
         computedHash: computed,
-        onChainHash: onChain,
+        onChainHash: onChain || "Not recorded on-chain",
         matches,
         checkedAt: new Date().toLocaleTimeString(),
       });
@@ -246,15 +246,19 @@ export function VerifyModal({ expense, isOpen, onClose }: VerifyModalProps) {
 
                 <div className="pt-1 text-[11px] text-slate-400 font-sans flex items-center justify-between border-t border-white/5">
                   <span>Verified at: {verificationResult.checkedAt}</span>
-                  <a
-                    href={`${MST_TESTNET.blockExplorerUrl}/tx/${expense.onChainTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-emerald-400 hover:underline flex items-center gap-1"
-                  >
-                    <span>View MSTScan Tx</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  {expense.isOnChain && expense.onChainTxHash ? (
+                    <a
+                      href={`${MST_TESTNET.blockExplorerUrl}/tx/${expense.onChainTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>View MSTScan Tx</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : (
+                    <span className="text-amber-400 text-[10px] font-medium">Sample data (not on-chain)</span>
+                  )}
                 </div>
               </div>
             </div>

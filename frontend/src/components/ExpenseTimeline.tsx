@@ -180,34 +180,42 @@ export function ExpenseTimeline({ campaigns, expenses }: ExpenseTimelineProps) {
 
                 {/* Footer on-chain cryptographic fingerprint */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-[11px] font-mono text-slate-400">
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="text-emerald-400 font-semibold">MST Fingerprint:</span>
-                    <span className="truncate max-w-[280px] sm:max-w-md text-slate-300">
-                      {exp.expenseHash}
-                    </span>
-                    <button
-                      onClick={() => handleCopy(exp.expenseHash)}
-                      className="p-1 hover:text-white transition-colors"
-                      title="Copy Hash"
-                    >
-                      {copiedHash === exp.expenseHash ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-3 h-3 text-slate-400" />
-                      )}
-                    </button>
-                  </div>
+                  {exp.isOnChain && exp.onChainTxHash && exp.expenseHash ? (
+                    <>
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="text-emerald-400 font-semibold font-sans">MST Fingerprint:</span>
+                        <span className="truncate max-w-[280px] sm:max-w-md text-slate-300">
+                          {exp.expenseHash}
+                        </span>
+                        <button
+                          onClick={() => handleCopy(exp.expenseHash!)}
+                          className="p-1 hover:text-white transition-colors cursor-pointer"
+                          title="Copy Hash"
+                        >
+                          {copiedHash === exp.expenseHash ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-slate-400" />
+                          )}
+                        </button>
+                      </div>
 
-                  {exp.onChainTxHash && (
-                    <a
-                      href={`${MST_TESTNET.blockExplorerUrl}/tx/${exp.onChainTxHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-cyan-400 hover:underline flex items-center gap-1 font-sans font-medium text-xs ml-auto"
-                    >
-                      <span>MSTScan Tx</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                      <a
+                        href={`${MST_TESTNET.blockExplorerUrl}/tx/${exp.onChainTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan-400 hover:underline flex items-center gap-1 font-sans font-medium text-xs ml-auto"
+                      >
+                        <span>MSTScan Tx</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-400 font-sans text-xs">
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/80 text-amber-300/80 text-[11px] font-medium">
+                        Sample data (not on-chain)
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>

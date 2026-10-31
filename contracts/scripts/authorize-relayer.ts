@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 async function main() {
   const args = process.argv.slice(2);
-  const relayerAddress = args[0] || "0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D";
+  const relayerAddress = process.env.TARGET_ACCOUNT || args[0] || "0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D";
 
   if (!ethers.isAddress(relayerAddress)) {
     console.error("Invalid relayer address provided:", relayerAddress);

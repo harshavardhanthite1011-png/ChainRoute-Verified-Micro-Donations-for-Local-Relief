@@ -18,6 +18,8 @@ import {
 } from "../lib/constants";
 import { walletManager, getMSTChainConfig } from "../lib/wallet";
 
+import { useWallet } from "../lib/wallet-context";
+
 interface NavbarProps {
   onNavigate?: (section: string) => void;
   activeSection?: string;
@@ -31,53 +33,25 @@ export function Navbar({
   isMainnet = false,
   setIsMainnet,
 }: NavbarProps) {
-  const [walletAddress, setWalletAddress] = useState<string>("");
-  const [isConnecting, setIsConnecting] = useState(false);
+  const { account: walletAddress, chainId: currentChainId, isConnecting, isAuthorized, connect } = useWallet();
   const [copied, setCopied] = useState(false);
-  const [currentChainId, setCurrentChainId] = useState<string>("");
   const [installPrompt, setInstallPrompt] = useState<boolean>(false);
-
-  useEffect(() => {
-    // Setup provider change callbacks
-    walletManager.setCallbacks(
-      (accounts) => {
-        setWalletAddress(accounts && accounts.length > 0 ? accounts[0] : "");
-      },
-      (chainId) => {
-        setCurrentChainId(chainId);
-      }
-    );
-
-    // Silent auto-reconnect if BridgeKey was previously connected
-    walletManager
-      .autoReconnect(isMainnet)
-      .then((res) => {
-        if (res) {
-          setWalletAddress(res.account);
-          setCurrentChainId(res.chainIdHex);
-        }
-      })
-      .catch(() => {});
-  }, [isMainnet]);
+  const [navbarError, setNavbarError] = useState<string | null>(null);
 
   const handleConnect = async () => {
-    setIsConnecting(true);
     setInstallPrompt(false);
+    setNavbarError(null);
     try {
-      const res = await walletManager.connectBridgeKey(isMainnet);
-      setWalletAddress(res.account);
-      setCurrentChainId(res.chainIdHex);
+      await connect(isMainnet);
     } catch (err: any) {
       if (err.message === "BRIDGEKEY_NOT_INSTALLED") {
         setInstallPrompt(true);
-      } else if (err.code === 4001) {
-        // User rejected the connection request in popup
+      } else if (err.code === 4001 || err.message?.includes("User rejected")) {
         console.log("User rejected connection request.");
       } else {
-        alert(err.message || "Failed to connect to BridgeKey.");
+        setNavbarError(err.message || "Failed to connect to BridgeKey.");
+        setTimeout(() => setNavbarError(null), 5000);
       }
-    } finally {
-      setIsConnecting(false);
     }
   };
 
@@ -177,6 +151,11 @@ export function Navbar({
               <span className="font-mono text-emerald-400 font-medium">
                 {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
               </span>
+              {isAuthorized && (
+                <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40">
+                  Organizer
+                </span>
+              )}
               <button
                 onClick={handleCopy}
                 className="p-1 hover:text-white transition-colors cursor-pointer"

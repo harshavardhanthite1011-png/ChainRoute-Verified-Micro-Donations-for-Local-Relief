@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const relayerAddress = "0x7AdcbDF99843B20AAadC650b51C8547f3410Df8D";
-  const amount = "1.0"; // 1 tMSTC
+  const relayerAddress = process.env.TARGET_ACCOUNT || "0x882DeF92E1a9E7CB4c5d6A3Fbd7bF152E622Ad87";
+  const amount = process.env.FUND_AMOUNT || "0.5"; // 0.5 tMSTC
 
   const [owner] = await ethers.getSigners();
   console.log(`Funding relayer ${relayerAddress} with ${amount} tMSTC from owner ${owner.address}...`);

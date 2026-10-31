@@ -25,6 +25,7 @@ import {
   Sparkles,
   Lock,
 } from "lucide-react";
+import { WalletProvider } from "../lib/wallet-context";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState<string>("campaigns");
@@ -89,8 +90,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
-      {/* Navigation */}
+    <WalletProvider isMainnet={isMainnet}>
+      <div className="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
+        {/* Navigation */}
       <Navbar
         activeSection={activeSection}
         onNavigate={(sec) => setActiveSection(sec)}
@@ -318,5 +320,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
+  </WalletProvider>
+);
 }

@@ -3,6 +3,8 @@ import { ethers } from "ethers";
 import ABI from "../../../contracts/ChainRouteLedgerABI.json";
 import { MST_TESTNET, CONTRACT_ADDRESS_TESTNET } from "../../../lib/constants";
 
+export const maxDuration = 30;
+
 // -----------------------------------------------------------------------------
 // Security Controls: Rate Limiting & Origin Verification
 // -----------------------------------------------------------------------------
@@ -42,7 +44,6 @@ function verifyOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
   const host = req.headers.get("host");
   if (!origin || !host) {
-    // Direct or server-to-server calls within same domain
     return true;
   }
   try {
@@ -53,12 +54,94 @@ function verifyOrigin(req: NextRequest): boolean {
   }
 }
 
+function makeRef(): string {
+  return "REF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function decodeRelayError(error: any): { code: string; message: string; status: number } {
+  const rawMsg = (error?.reason || error?.shortMessage || error?.message || "").toLowerCase();
+
+  if (rawMsg.includes("duplicate expense hash") || rawMsg.includes("duplicate receipt hash")) {
+    return {
+      code: "DUPLICATE_RECORD",
+      message: "This expense bundle or receipt fingerprint has already been recorded on MST Blockchain. Duplicate submissions are rejected.",
+      status: 409,
+    };
+  }
+  if (rawMsg.includes("campaign does not exist")) {
+    return {
+      code: "CAMPAIGN_NOT_FOUND",
+      message: "The specified campaign ID does not exist on the smart contract.",
+      status: 404,
+    };
+  }
+  if (rawMsg.includes("lineitemid out of bounds")) {
+    return {
+      code: "LINE_ITEM_INVALID",
+      message: "The budget line item ID is invalid or out of bounds for this campaign.",
+      status: 400,
+    };
+  }
+  if (rawMsg.includes("caller is not authorized")) {
+    return {
+      code: "NOT_AUTHORIZED",
+      message: "The relayer account is not authorized as a writer on ChainRouteLedger.",
+      status: 403,
+    };
+  }
+  if (rawMsg.includes("nonce") || rawMsg.includes("replacement transaction underpriced")) {
+    return {
+      code: "NONCE_ERROR",
+      message: "Transaction nonce sequencing conflict. Please retry in a few seconds.",
+      status: 409,
+    };
+  }
+  if (rawMsg.includes("insufficient funds") || rawMsg.includes("gas required exceeds")) {
+    return {
+      code: "INSUFFICIENT_FUNDS",
+      message: "Relayer gas reserve is exhausted. Please fund relayer address with testnet tokens.",
+      status: 503,
+    };
+  }
+  if (rawMsg.includes("timeout") || rawMsg.includes("timed out")) {
+    return {
+      code: "TIMEOUT",
+      message: "MST RPC request timed out while awaiting response.",
+      status: 504,
+    };
+  }
+  if (rawMsg.includes("could not detect network") || rawMsg.includes("network error") || rawMsg.includes("econnrefused")) {
+    return {
+      code: "RPC_UNAVAILABLE",
+      message: "The MST Blockchain RPC node is unreachable. Please verify network status.",
+      status: 503,
+    };
+  }
+
+  // Extract explicit contract revert reason if present
+  const revertMatch = (error?.reason || error?.message || "").match(/reverted:?\s*"?([^"'\n]+)"?/i);
+  const cleanReason = revertMatch ? revertMatch[1] : error?.shortMessage || "Transaction execution reverted on-chain";
+
+  return {
+    code: "REVERTED",
+    message: cleanReason,
+    status: 400,
+  };
+}
+
 export async function POST(req: NextRequest) {
+  const ref = makeRef();
   try {
     // 1. Origin and Host Check
     if (!verifyOrigin(req)) {
       return NextResponse.json(
-        { success: false, error: "Cross-origin relay requests are forbidden" },
+        {
+          success: false,
+          code: "NOT_AUTHORIZED",
+          error: "Cross-origin relay requests are forbidden",
+          message: "Cross-origin relay requests are forbidden",
+          ref,
+        },
         { status: 403 }
       );
     }
@@ -67,7 +150,13 @@ export async function POST(req: NextRequest) {
     const clientIp = getClientIp(req);
     if (!checkRateLimit(clientIp)) {
       return NextResponse.json(
-        { success: false, error: "Rate limit exceeded. Please try again later or use BridgeKey wallet directly." },
+        {
+          success: false,
+          code: "RATE_LIMITED",
+          error: "Rate limit exceeded. Please try again in 1 minute or use BridgeKey wallet directly.",
+          message: "Rate limit exceeded. Please try again in 1 minute or use BridgeKey wallet directly.",
+          ref,
+        },
         { status: 429 }
       );
     }
@@ -76,7 +165,13 @@ export async function POST(req: NextRequest) {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) > MAX_BODY_BYTES) {
       return NextResponse.json(
-        { success: false, error: "Payload exceeds size limit" },
+        {
+          success: false,
+          code: "VALIDATION",
+          error: "Payload exceeds size limit",
+          message: "Payload exceeds size limit",
+          ref,
+        },
         { status: 413 }
       );
     }
@@ -86,37 +181,73 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
+          code: "NOT_AUTHORIZED",
           error: "Server relayer is disabled. Please connect your BridgeKey browser wallet to sign directly on-chain.",
+          message: "Server relayer is disabled. Please connect your BridgeKey browser wallet to sign directly on-chain.",
+          ref,
         },
         { status: 503 }
       );
     }
 
-    const privateKey = process.env.PRIVATE_KEY;
-    if (!privateKey) {
+    const rawPrivateKey = process.env.PRIVATE_KEY;
+    if (!rawPrivateKey) {
       return NextResponse.json(
         {
           success: false,
+          code: "NOT_AUTHORIZED",
           error: "Relayer private key is not configured. Please connect BridgeKey wallet to submit directly.",
+          message: "Relayer private key is not configured. Please connect BridgeKey wallet to submit directly.",
+          ref,
         },
         { status: 400 }
       );
     }
 
+    // Sanitize key without logging
+    const privateKey = rawPrivateKey.trim().replace(/^['"]|['"]$/g, "");
+
     // 5. Parse and Validate Request Body
-    const body = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "VALIDATION",
+          error: "Malformed JSON payload",
+          message: "Malformed JSON payload",
+          ref,
+        },
+        { status: 400 }
+      );
+    }
+
     const { action, contractAddress, payload } = body;
 
     if (!action || !ALLOWED_ACTIONS.includes(action as AllowedAction)) {
       return NextResponse.json(
-        { success: false, error: "Invalid action specified" },
+        {
+          success: false,
+          code: "VALIDATION",
+          error: "Invalid action specified",
+          message: "Invalid action specified",
+          ref,
+        },
         { status: 400 }
       );
     }
 
     if (!payload || typeof payload !== "object") {
       return NextResponse.json(
-        { success: false, error: "Missing or invalid payload" },
+        {
+          success: false,
+          code: "VALIDATION",
+          error: "Missing or invalid payload",
+          message: "Missing or invalid payload",
+          ref,
+        },
         { status: 400 }
       );
     }
@@ -124,7 +255,13 @@ export async function POST(req: NextRequest) {
     const targetContract = contractAddress || CONTRACT_ADDRESS_TESTNET;
     if (!targetContract || !ETH_ADDRESS_REGEX.test(targetContract)) {
       return NextResponse.json(
-        { success: false, error: "Invalid contract address" },
+        {
+          success: false,
+          code: "VALIDATION",
+          error: "Invalid contract address",
+          message: "Invalid contract address",
+          ref,
+        },
         { status: 400 }
       );
     }
@@ -133,38 +270,68 @@ export async function POST(req: NextRequest) {
     if (action === "createCampaign") {
       const { budgetHash, goal, itemsCount } = payload;
       if (!budgetHash || !HEX_BYTES32_REGEX.test(budgetHash)) {
-        return NextResponse.json({ success: false, error: "Invalid budgetHash format (32-byte hex required)" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid budgetHash format (32-byte hex required)", message: "Invalid budgetHash format", ref },
+          { status: 400 }
+        );
       }
       if (typeof goal !== "number" || goal <= 0 || !Number.isSafeInteger(goal)) {
-        return NextResponse.json({ success: false, error: "Invalid goal amount" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid goal amount", message: "Invalid goal amount", ref },
+          { status: 400 }
+        );
       }
       if (typeof itemsCount !== "number" || itemsCount <= 0 || itemsCount > 100 || !Number.isSafeInteger(itemsCount)) {
-        return NextResponse.json({ success: false, error: "Invalid itemsCount (must be integer between 1 and 100)" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid itemsCount (must be integer between 1 and 100)", message: "Invalid itemsCount", ref },
+          { status: 400 }
+        );
       }
     } else if (action === "recordDonation") {
       const { campaignId, receiptHash, amount } = payload;
       if (typeof campaignId !== "number" || campaignId < 1 || !Number.isSafeInteger(campaignId)) {
-        return NextResponse.json({ success: false, error: "Invalid campaignId" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid campaignId", message: "Invalid campaignId", ref },
+          { status: 400 }
+        );
       }
       if (!receiptHash || !HEX_BYTES32_REGEX.test(receiptHash)) {
-        return NextResponse.json({ success: false, error: "Invalid receiptHash format (32-byte hex required)" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid receiptHash format (32-byte hex required)", message: "Invalid receiptHash format", ref },
+          { status: 400 }
+        );
       }
       if (typeof amount !== "number" || amount <= 0 || !Number.isSafeInteger(amount)) {
-        return NextResponse.json({ success: false, error: "Invalid donation amount" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid donation amount", message: "Invalid donation amount", ref },
+          { status: 400 }
+        );
       }
     } else if (action === "recordExpense") {
       const { campaignId, lineItemId, expenseHash, amount } = payload;
       if (typeof campaignId !== "number" || campaignId < 1 || !Number.isSafeInteger(campaignId)) {
-        return NextResponse.json({ success: false, error: "Invalid campaignId" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid campaignId", message: "Invalid campaignId", ref },
+          { status: 400 }
+        );
       }
       if (typeof lineItemId !== "number" || lineItemId < 0 || !Number.isSafeInteger(lineItemId)) {
-        return NextResponse.json({ success: false, error: "Invalid lineItemId" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid lineItemId", message: "Invalid lineItemId", ref },
+          { status: 400 }
+        );
       }
       if (!expenseHash || !HEX_BYTES32_REGEX.test(expenseHash)) {
-        return NextResponse.json({ success: false, error: "Invalid expenseHash format (32-byte hex required)" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid expenseHash format (32-byte hex required)", message: "Invalid expenseHash format", ref },
+          { status: 400 }
+        );
       }
       if (typeof amount !== "number" || amount <= 0 || !Number.isSafeInteger(amount)) {
-        return NextResponse.json({ success: false, error: "Invalid expense amount" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, code: "VALIDATION", error: "Invalid expense amount", message: "Invalid expense amount", ref },
+          { status: 400 }
+        );
       }
     }
 
@@ -183,46 +350,81 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Relayer wallet balance (${ethers.formatEther(balance)} tMSTC) is insufficient for gas fees. Please fund relayer address ${wallet.address} with testnet tokens at ${MST_TESTNET.faucetUrl}`,
+          code: "INSUFFICIENT_FUNDS",
+          error: `Relayer wallet balance (${ethers.formatEther(balance)} tMSTC) is insufficient for gas fees. Please fund relayer address ${wallet.address} at ${MST_TESTNET.faucetUrl}`,
+          message: `Relayer wallet balance (${ethers.formatEther(balance)} tMSTC) is insufficient for gas fees.`,
+          ref,
         },
         { status: 503 }
       );
     }
 
     const contract = new ethers.Contract(targetContract, ABI, wallet);
+
+    // Fetch fee data for legacy chain
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice || ethers.parseUnits("1", "gwei");
+
+    // Manage nonce
+    const nonce = await provider.getTransactionCount(wallet.address, "pending");
+
+    const txOverrides: ethers.Overrides = {
+      gasPrice,
+      nonce,
+    };
+
     let tx: ethers.ContractTransactionResponse;
 
     if (action === "createCampaign") {
       const { budgetHash, goal, itemsCount } = payload;
-      tx = await contract.createCampaign(budgetHash, goal, itemsCount);
+      const estGas = await contract.createCampaign.estimateGas(budgetHash, goal, itemsCount);
+      txOverrides.gasLimit = (estGas * 125n) / 100n;
+      tx = await contract.createCampaign(budgetHash, goal, itemsCount, txOverrides);
     } else if (action === "recordDonation") {
       const { campaignId, receiptHash, amount } = payload;
-      tx = await contract.recordDonation(campaignId, receiptHash, amount);
+      const estGas = await contract.recordDonation.estimateGas(campaignId, receiptHash, amount);
+      txOverrides.gasLimit = (estGas * 125n) / 100n;
+      tx = await contract.recordDonation(campaignId, receiptHash, amount, txOverrides);
     } else {
       const { campaignId, lineItemId, expenseHash, amount } = payload;
-      tx = await contract.recordExpense(campaignId, lineItemId, expenseHash, amount);
+      const estGas = await contract.recordExpense.estimateGas(campaignId, lineItemId, expenseHash, amount);
+      txOverrides.gasLimit = (estGas * 125n) / 100n;
+      tx = await contract.recordExpense(campaignId, lineItemId, expenseHash, amount, txOverrides);
     }
 
-    const receipt = await tx.wait();
+    // Wait briefly up to 1 confirmation or return broadcasted hash for client confirmation
+    let blockNumber: number | undefined;
+    try {
+      const receipt = (await Promise.race([
+        tx.wait(1),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("POLL_TIMEOUT")), 8000)),
+      ])) as ethers.ContractTransactionReceipt | null;
+      blockNumber = receipt?.blockNumber;
+    } catch {
+      // Return txHash immediately; client polls receipt via RPC
+    }
 
     return NextResponse.json({
       success: true,
       data: {
         txHash: tx.hash,
-        blockNumber: receipt?.blockNumber,
+        blockNumber,
         explorerUrl: `${MST_TESTNET.blockExplorerUrl}/tx/${tx.hash}`,
         signer: wallet.address,
       },
     });
   } catch (error: any) {
-    // Log generic error message without exposing any sensitive details
-    console.error("Relay transaction execution error:", error?.message || "Unknown error");
+    console.error("Relay transaction error [Ref:", ref, "]:", error?.message || error);
+    const decoded = decodeRelayError(error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to broadcast transaction on MST Blockchain. Please verify contract permissions or sign with BridgeKey.",
+        code: decoded.code,
+        error: decoded.message,
+        message: decoded.message,
+        ref,
       },
-      { status: 500 }
+      { status: decoded.status }
     );
   }
 }
